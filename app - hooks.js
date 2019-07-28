@@ -1,10 +1,4 @@
-
-//Un transport es un plugin que convierte l aplicación de feather en un servidor
-//Que expone nuestros servicios a través de distitons protocolos para el uso de los clientes.
-//Feather transport mapea los métodos de un servicio a un endpoint 
-
-const feathers = require('@feathersjs/feathers');
-const express = require('@feathersjs/express');
+feathers = require('@feathersjs/feathers');
 const { BadRequest } = require('@feathersjs/errors');
 
 class Messages{
@@ -67,32 +61,14 @@ class Messages{
 
 }
 
-//Crea un aplicación tanto de express como de Feathers
-const app = express(feathers());
-
-//Activa JSON body parsing para los servicios rest
-app.use(express.json());
-
-//Activar URL-encoded body parsing para los servicios REST
-app.use(express.urlencoded({extended: true}));
-
-//Configura un REST transport usando express
-app.configure(express.rest());
-
-
+const app = feathers();
 
 //Inicializando el servicio de mensajes creando una nueva instancia
 // de uestra clase
 //Se registra el servicio en nuetra aplicación de feathers
 app.use('messages', new Messages());
 
-//Configura el manejo de errores para darnos errores más bonitos
-app.use(express.errorHandler());
 
-
-//Iniciar el servidor en el puerto 3030
-
-const server  = app.listen(3030);
 
 
 //Es frecuente que una aplicación utiliza una 
@@ -227,7 +203,6 @@ async function processMessages(){
 	processMessages();
 
 
-server.on('listening', ()=> console.log('Feathers REST API started at http://localhost:3030'));
 
 
 
