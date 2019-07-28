@@ -1,18 +1,18 @@
 /*global io*/
 
+//Creando un websocket conectando al server de Feathers
+const socket = io('http://localhost:3030');
+
 //Crear una palicación de feathers
 const app = feathers();
-//Inicializando la conección rest
-const rest = feathers.rest('http://localhost:3030');
 
-//Configurar el cliente rest para usar window fetch
+//Congigurar socket io cliente para usar ese servicio
+app.configure(feathers.socketio(socket));
 
-app.configure(rest.fetch(window.fetch));
+app.service('messages').on("created", function(message){
+	console.log('Alguien creó un mensaje', message);
 
-app.service('messages').on('created', message=>{
-	console.log("Creando un nuevo mensaje localmente", message)
-})
-
+});
 
 async function createAndList(){
 	await app.service('messages').create({

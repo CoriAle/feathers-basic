@@ -6,6 +6,13 @@ const memory = require('feathers-memory');
 //Una aplicación de feathers y de express
 const app = express(feathers());
 
+//Activando CORS
+app.use(function(req, res, next){
+	res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
+
 //Activar body parsing
 app.use(express.json());
 
