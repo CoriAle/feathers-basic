@@ -1,32 +1,21 @@
-const app = feathers();
+/*global io*/
 
+//Creando un websocket conectando al server de Feathers
+const socket = io('http://localhost:3030');
 
-//Registro de un simple servicio
-//todo que retorn ael nombre y un texto
-
-app.use('todos', {
-	async get(name){
-		//Retorna un objeto en la foma
-		//{name, text}
-
-		return {
-			name,
-			text: `Tienes que hacer ${name}`
-		}
-	}
+//Escuahar cuando nuevos mensajes se han creado
+socket.on('messages created', message=>{
+	console.log('Alguien creo un mensaje', message);
 });
 
-//Una funación que obtiene y registra un todo
-//Del servicio
+socket.emit('create', 'messages', {
+	text: "Hola desde socket"
+}, function(error, result){
+	if(error) throw error;
+	socket.emit('find', 'messages', function(error, messageList){
+		if(error) throw error;
+		console.log('Mensajes actuales', messageList);
 
-async function getTodo(name){
-	//Obtener el srvicio que registramos arriba
-	const service = app.service('todos');
-	//Llamar al método get con un nombre
-	const todo = await service.get(name);
+	});
 
-	//Log del todo que obtuvimos
-	console.log(todo);
-}
-
-getTodo('dishes');
+})

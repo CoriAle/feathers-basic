@@ -1,22 +1,31 @@
 const feathers = require('@feathersjs/feathers');
+const socketio = require('@feathersjs/socketio');
 const express = require('@feathersjs/express');
 const memory = require('feathers-memory');
 
+//Una aplicación de feathers y de express
 const app = express(feathers());
 
-//activar body-parsing
-
+//Activar body parsing
 app.use(express.json());
 
-//Activiar url-enconded body parsing
-
+//Activar url-encoded body parsing
 app.use(express.urlencoded({extended: true}));
 
-//configurar un transport rest
+//Configurar el rest transport para usar express
 app.configure(express.rest());
 
+//Configurar transport de socket.io
+app.configure(socketio());
 
-//Se tiene un crud completo
+//Agregar a todos al canal everybody
+app.on('connection', connection=> app.channel('everybody').join(connection));
+
+//Publicando todos los eventos del canal everybody
+
+app.publish(()=> app.channel('everybody'));
+
+//Inicializando el servicio de mensajes
 app.use('messages', memory({
 	paginate:{
 		default: 10,
@@ -24,15 +33,9 @@ app.use('messages', memory({
 	}
 }));
 
-//Configurar manejo de errores
+//Configurar el manejador de errores
 app.use(express.errorHandler());
 
-//Start server 
+//Start server
 const server = app.listen(3030);
-
-//Usar el servicio para crear un mensaje en el server
-app.service('messages').create({
-	text: "Hola desde el servidor"
-});
-
-server.on('listening', ()=> console.log("Feathers REST API started at 3030 port"));
+server.on('listening', ()=> console.log("Feathers  API started at 3030 port"));
