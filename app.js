@@ -1,4 +1,5 @@
 feathers = require('@feathersjs/feathers');
+const { BadRequest } = require('@feathersjs/errors');
 
 class Messages{
 
@@ -67,6 +68,106 @@ const app = feathers();
 //Se registra el servicio en nuetra aplicación de feathers
 app.use('messages', new Messages());
 
+
+
+
+//Es frecuente que una aplicación utiliza una 
+//funcionalidad similar a través de multiples servicios
+//Los hooks son funciones middleware conectanbles que pueden
+//ser registrdos antes, despueés o en error de un método de un servicio
+//Pueden ser usados con cualquier servicio
+//Usados comunmente para validaciones, autorizaciónes , logs, poblar entidades 
+//relaciondas, enviar notificaciones entre otros.
+
+/*app.service('messages').hook({
+	before:{
+		create(context){
+			context.data.createdAt = new Date();
+			return context;
+		}
+	}
+})*/
+
+//Un hook functio es una función que toma el contexto delhook como
+//parámetro y devuelve el contexo o nada
+
+const setTimestamp = name=>{
+	return async context=>{
+
+		//context es un objeto con info del servicio
+		//props read-only: .app => la aplicación feathers
+		/*				   .service => el servicio en el que corre este hook
+						   .method => el méotodo del serivicio
+						   .type => before, after, error*/
+		/*Writeable
+						 .params => los parámetros del servicio: query, provider: rest, socketio, primus, null;
+						 .id => id de una llamada get, remove update o patch
+						 .data => la data envida al servicio en create, update, patch (body)
+						 .errors=> el error lanzado en el erro hooks
+						 .result el resultado de la llamada del método del servicio en un hook after
+		*/
+		context.data[name] = new Date();
+		return context;
+	}
+}
+
+const validate = async context =>{
+	const { data } = context;
+
+	//Revisar si existe la propiedad text
+	if(!data.text){
+		throw new BadRequest('El mensaje debe tener un texto')
+	}
+
+	//Revisar si es string y no solo espacios en blanco
+	if(typeof data.text !== 'string' || data.text.trim()=== ''){
+		throw new BadRequest('El mensaje no es válido');
+	}
+
+	//Cambiar la data para se solamente el texto
+	//Esto previende que las personas agreguen otras propiedades a la db
+
+	context.data = {
+		text: data.text.toString()
+	}
+
+	return context;
+}
+ //Registro del hook
+const messageHooks = {
+	before:{
+		all: [],
+		find: [],
+		get: [],
+		create: [validate, setTimestamp('createdAt')],
+		update: [validate, setTimestamp('updatedAt')],
+		patch: [validate, ],
+		remove: [],
+	},
+	after:{
+		all: [],
+		find: [],
+		get: [],
+		create: [],
+		update: [],
+		patch: [],
+		remove: [],
+	}
+};
+
+//Si un hook lanza un error, los siguintes hooks serán omitidos y se devolverá el error al usuario
+
+//Aplication hook es llamado antes que los hooks de los servicios
+app.service('messages').hooks(messageHooks);
+
+
+app.hooks({
+	error: async context=>{
+		console.log(`Error en ${context.path} service, método ${context.method} `, context.error.stack );
+	}
+})
+
+
 async function processMessages(){
 	//Todo servicio se convierte en un event emmite
 	//para los métodos que modifican
@@ -100,6 +201,8 @@ async function processMessages(){
 
 }
 	processMessages();
+
+
 
 
 
